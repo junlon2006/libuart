@@ -1,0 +1,11 @@
+---
+BasedOnStyle: Google
+IndentWidth: 2
+ColumnLimit: 80
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+BreakBeforeBraces: Linux
+IndentCaseLabels: false
+PointerAlignment: Right
+SpaceAfterCStyleCast: true

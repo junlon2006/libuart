@@ -39,11 +39,11 @@ typedef enum {
 } LogLevel;
 
 typedef struct {
-  int      enable_time;
-  int      enable_thread_id;
-  int      enable_function_line;
-  int      enable_color;
-  int      enable_file;
+  int enable_time;
+  int enable_thread_id;
+  int enable_function_line;
+  int enable_color;
+  int enable_file;
   LogLevel set_level;
 } LogConfig;
 
@@ -52,14 +52,16 @@ int LogFinalize(void);
 int LogLevelSet(LogLevel level);
 
 int LogLevelValid(LogLevel level);
-int LogWrite(LogLevel level, const char *tags, const char *function,
-             int line, char *fmt, ...);
+int LogWrite(LogLevel level, const char *tags, const char *function, int line,
+             char *fmt, ...);
 
-#define LOG(level, tag, fmt, ...) do { \
-  if (LogLevelValid(level)) { \
-    LogWrite(level, tag, __FUNCTION__, __LINE__, (char *)fmt, ##__VA_ARGS__); \
-  } \
-} while (0)
+#define LOG(level, tag, fmt, ...)                                \
+  do {                                                           \
+    if (LogLevelValid(level)) {                                  \
+      LogWrite(level, tag, __FUNCTION__, __LINE__, (char *) fmt, \
+               ##__VA_ARGS__);                                   \
+    }                                                            \
+  } while (0)
 
 #define LOGD(tag, fmt, ...) LOG(N_LOG_DEBUG, tag, fmt, ##__VA_ARGS__)
 #define LOGT(tag, fmt, ...) LOG(N_LOG_TRACK, tag, fmt, ##__VA_ARGS__)
@@ -68,6 +70,6 @@ int LogWrite(LogLevel level, const char *tags, const char *function,
 #define LOGR(tag, fmt, ...) LOG(N_LOG_RAW, tag, fmt, ##__VA_ARGS__)
 
 #ifdef __cplusplus
-}   /* __cplusplus */
+} /* __cplusplus */
 #endif
-#endif  /* LOGGER_INC_UNI_LOG_H_ */
+#endif /* LOGGER_INC_UNI_LOG_H_ */

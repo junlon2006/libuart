@@ -1,0 +1,30 @@
+# Build artifacts
+*.o
+*.a
+*.so
+*.dylib
+peera
+peerb
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile.cmake
+*.cmake
+!CMakeLists.txt
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+/tmp/uart-mock-*
+*.log

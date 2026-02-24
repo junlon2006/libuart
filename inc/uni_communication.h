@@ -28,24 +28,25 @@
 extern "C" {
 #endif
 
-#define PACKED              __attribute__ ((packed))
+#define PACKED __attribute__((packed))
 
 #ifndef uni_bool
-#define uni_bool            int
+#define uni_bool int
 #endif
 
-typedef unsigned short      CommCmd;
-typedef unsigned short      CommPayloadLen;
-typedef int                 (*CommWriteHandler)(char *buf, int len);
+typedef unsigned short CommCmd;
+typedef unsigned short CommPayloadLen;
+typedef int (*CommWriteHandler)(char *buf, int len);
 
 typedef struct {
-  CommCmd        cmd; /* air condition ctrl cmd such as power_on, power_off */
+  CommCmd cmd; /* air condition ctrl cmd such as power_on, power_off */
   CommPayloadLen payload_len; /* parameter length of command */
-  char*          payload;     /* parameter of command */
+  char *payload;              /* parameter of command */
 } PACKED CommPacket;
 
 typedef struct {
-  uni_bool reliable; /* true means this packet need acked, reliable transmission */
+  uni_bool
+      reliable; /* true means this packet need acked, reliable transmission */
 } CommAttribute;
 
 typedef enum {
@@ -60,12 +61,13 @@ typedef void (*CommRecvPacketHandler)(CommPacket *packet);
 /**
  * @brief communication protocol init
  * @param write_handler the write handler, such as UartWrite int uni_uart.h
- * @param recv_handler when uart data disassemble as communication protocol frame,
-          the frame will be translate to struct CommPacket,
-          then the CommPacket will callback to user
+ * @param recv_handler when uart data disassemble as communication protocol
+ frame, the frame will be translate to struct CommPacket, then the CommPacket
+ will callback to user
  * @return 0 means success, -1 means failed
  */
-int CommProtocolInit(CommWriteHandler write_handler, CommRecvPacketHandler recv_handler);
+int CommProtocolInit(CommWriteHandler write_handler,
+                     CommRecvPacketHandler recv_handler);
 
 /**
  * @brief communication protocol finalize

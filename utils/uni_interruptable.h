@@ -28,12 +28,12 @@
 extern "C" {
 #endif
 
-typedef void*   InterruptHandle;
+typedef void* InterruptHandle;
 
 InterruptHandle InterruptCreate();
-int             InterruptDestroy(InterruptHandle handle);
-int             InterruptableSleep(InterruptHandle handle, int sleep_msec);
-int             InterruptableBreak(InterruptHandle handle);
+int InterruptDestroy(InterruptHandle handle);
+int InterruptableSleep(InterruptHandle handle, int sleep_msec);
+int InterruptableBreak(InterruptHandle handle);
 
 #ifdef __cplusplus
 }
