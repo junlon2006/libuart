@@ -23,85 +23,92 @@
  **************************************************************************/
 #include "uni_log.h"
 
-#include <pthread.h>
-#include <string.h>
-#include <stdio.h>
-#include <sys/time.h>
 #include <fcntl.h>
-#include <stdarg.h>
-#include <stdlib.h>
 #include <inttypes.h>
+#include <pthread.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
 #include <unistd.h>
 
-#define LOG_BUFFER_LEN       (1024)
-#define LOG_FILE_NAME        "app.log"
-#define uni_min(x,y)         ((x) > (y) ? (y) : (x))
-#define uni_max(x,y)         ((x) > (y) ? (x) : (y))
+#define LOG_BUFFER_LEN (1024)
+#define LOG_FILE_NAME "app.log"
+#define uni_min(x, y) ((x) > (y) ? (y) : (x))
+#define uni_max(x, y) ((x) > (y) ? (x) : (y))
 
 typedef struct {
-  int             fd;
+  int fd;
   pthread_mutex_t mutex;
 } LogFile;
 
 static LogConfig g_log_config = {1, 1, 1, 1, 0, N_LOG_ALL};
-static LogFile   g_log_file;
+static LogFile g_log_file;
 
-static const char* _level_tostring(LogLevel level) {
+static const char *_level_tostring(LogLevel level)
+{
   switch (level) {
-    case N_LOG_ERROR: return g_log_config.enable_color ?
-                             "\033[0m\033[41;33m[E]\033[0m" : "[E]";
-    case N_LOG_DEBUG: return g_log_config.enable_color ?
-                             "\033[0m\033[47;33m[D]\033[0m" : "[D]";
-    case N_LOG_TRACK: return g_log_config.enable_color ?
-                             "\033[0m\033[42;33m[T]\033[0m" : "[T]";
-    case N_LOG_WARN:  return g_log_config.enable_color ?
-                             "\033[0m\033[41;33m[W]\033[0m" : "[W]";
-    default:          return "[N/A]";
+  case N_LOG_ERROR:
+    return g_log_config.enable_color ? "\033[0m\033[41;33m[E]\033[0m" : "[E]";
+  case N_LOG_DEBUG:
+    return g_log_config.enable_color ? "\033[0m\033[47;33m[D]\033[0m" : "[D]";
+  case N_LOG_TRACK:
+    return g_log_config.enable_color ? "\033[0m\033[42;33m[T]\033[0m" : "[T]";
+  case N_LOG_WARN:
+    return g_log_config.enable_color ? "\033[0m\033[41;33m[W]\033[0m" : "[W]";
+  default:
+    return "[N/A]";
   }
 }
 
-static void _get_now_str(char *buf, int len) {
+static void _get_now_str(char *buf, int len)
+{
   struct timeval tv;
   time_t s;
   struct tm local;
   gettimeofday(&tv, NULL);
   s = tv.tv_sec;
   localtime_r(&s, &local);
-  snprintf(buf, len, "%02d:%02d:%02d.%06ld ", local.tm_hour,
-           local.tm_min, local.tm_sec, (long)tv.tv_usec);
+  snprintf(buf, len, "%02d:%02d:%02d.%06ld ", local.tm_hour, local.tm_min,
+           local.tm_sec, (long) tv.tv_usec);
 }
 
-static void _get_thread_id_str(char *buf, int len) {
+static void _get_thread_id_str(char *buf, int len)
+{
   pthread_t thread_id = pthread_self();
-  snprintf(buf, len, "%x", (unsigned int)thread_id);
+  snprintf(buf, len, "%lx", (unsigned long) thread_id);
 }
 
-static int _fill_log_level(LogLevel level, char *buf, int len) {
+static int _fill_log_level(LogLevel level, char *buf, int len)
+{
   int write_len = 0;
   switch (level) {
-    case N_LOG_DEBUG:
-      write_len = snprintf(buf, len, "%s ", _level_tostring(N_LOG_DEBUG));
-      break;
-    case N_LOG_TRACK:
-      write_len = snprintf(buf, len, "%s ", _level_tostring(N_LOG_TRACK));
-      break;
-    case N_LOG_WARN:
-      write_len = snprintf(buf, len, "%s ", _level_tostring(N_LOG_WARN));
-      break;
-    case N_LOG_ERROR:
-      write_len = snprintf(buf, len, "%s ", _level_tostring(N_LOG_ERROR));
-      break;
-    default:
-      break;
+  case N_LOG_DEBUG:
+    write_len = snprintf(buf, len, "%s ", _level_tostring(N_LOG_DEBUG));
+    break;
+  case N_LOG_TRACK:
+    write_len = snprintf(buf, len, "%s ", _level_tostring(N_LOG_TRACK));
+    break;
+  case N_LOG_WARN:
+    write_len = snprintf(buf, len, "%s ", _level_tostring(N_LOG_WARN));
+    break;
+  case N_LOG_ERROR:
+    write_len = snprintf(buf, len, "%s ", _level_tostring(N_LOG_ERROR));
+    break;
+  default:
+    break;
   }
   return uni_max(0, write_len);
 }
 
-static int _fill_tag(char *buf, int len, const char *tag) {
+static int _fill_tag(char *buf, int len, const char *tag)
+{
   return uni_max(0, snprintf(buf, len, "<%s>", tag));
 }
 
-static int _fill_time(char *buf, int len) {
+static int _fill_time(char *buf, int len)
+{
   char now[64];
   if (!g_log_config.enable_time) {
     return 0;
@@ -111,12 +118,15 @@ static int _fill_time(char *buf, int len) {
 }
 
 static int _fill_function_line(char *buf, int len, const char *function,
-                               int line) {
-  return (g_log_config.enable_function_line ?
-          uni_max(0, snprintf(buf, len, "%s:%d->", function, line)) : 0);
+                               int line)
+{
+  return (g_log_config.enable_function_line
+              ? uni_max(0, snprintf(buf, len, "%s:%d->", function, line))
+              : 0);
 }
 
-static int _fill_thread_id(char *buf, int len) {
+static int _fill_thread_id(char *buf, int len)
+{
   char thread_id[32];
   if (!g_log_config.enable_thread_id) {
     return 0;
@@ -126,7 +136,8 @@ static int _fill_thread_id(char *buf, int len) {
 }
 
 static void _fill_customer_info(char *buf, int len, char *fmt, va_list args,
-                                int append_feed_line) {
+                                int append_feed_line)
+{
   int length, remain_len;
   length = vsnprintf(buf, len, fmt, args);
   length = uni_max(length, 0);
@@ -151,7 +162,8 @@ static void _fill_customer_info(char *buf, int len, char *fmt, va_list args,
   return;
 }
 
-static void _save_log_2_file(char *buf, int len) {
+static void _save_log_2_file(char *buf, int len)
+{
   if (0 < g_log_file.fd && 0 < len) {
     pthread_mutex_lock(&g_log_file.mutex);
     if (len != write(g_log_file.fd, buf, len)) {
@@ -161,27 +173,30 @@ static void _save_log_2_file(char *buf, int len) {
   }
 }
 
-int LogLevelValid(LogLevel level) {
+int LogLevelValid(LogLevel level)
+{
   return level <= g_log_config.set_level ? 1 : 0;
 }
 
-#define _log_assemble(buf, level, tags, function, line, fmt, args) do { \
-  int len = 0; \
-  if (level != N_LOG_RAW) { \
-    len += _fill_log_level(level, buf + len, LOG_BUFFER_LEN - len); \
-    len += _fill_time(buf + len, LOG_BUFFER_LEN - len); \
-    len += _fill_thread_id(buf + len, LOG_BUFFER_LEN - len); \
-    len += _fill_tag(buf + len, LOG_BUFFER_LEN - len, tags); \
-    len += _fill_function_line(buf + len, LOG_BUFFER_LEN - len, \
-                               function, line); \
-  } \
-  _fill_customer_info(buf + len, LOG_BUFFER_LEN - len, fmt, args, \
-                      level != N_LOG_RAW); \
-} while (0)
+#define _log_assemble(buf, level, tags, function, line, fmt, args)          \
+  do {                                                                      \
+    int len = 0;                                                            \
+    if (level != N_LOG_RAW) {                                               \
+      len += _fill_log_level(level, buf + len, LOG_BUFFER_LEN - len);       \
+      len += _fill_time(buf + len, LOG_BUFFER_LEN - len);                   \
+      len += _fill_thread_id(buf + len, LOG_BUFFER_LEN - len);              \
+      len += _fill_tag(buf + len, LOG_BUFFER_LEN - len, tags);              \
+      len += _fill_function_line(buf + len, LOG_BUFFER_LEN - len, function, \
+                                 line);                                     \
+    }                                                                       \
+    _fill_customer_info(buf + len, LOG_BUFFER_LEN - len, fmt, args,         \
+                        level != N_LOG_RAW);                                \
+  } while (0)
 
 static int _sync_write_process(LogLevel level, const char *tags,
-                               const char *function, int line,
-                               char *fmt, va_list args) {
+                               const char *function, int line, char *fmt,
+                               va_list args)
+{
   char buf[LOG_BUFFER_LEN];
   _log_assemble(buf, level, tags, function, line, fmt, args);
   printf("%s", buf);
@@ -190,7 +205,8 @@ static int _sync_write_process(LogLevel level, const char *tags,
 }
 
 int LogWrite(LogLevel level, const char *tags, const char *function, int line,
-             char *fmt, ...) {
+             char *fmt, ...)
+{
   va_list args;
   va_start(args, fmt);
   _sync_write_process(level, tags, function, line, fmt, args);
@@ -198,18 +214,21 @@ int LogWrite(LogLevel level, const char *tags, const char *function, int line,
   return 0;
 }
 
-static void _destroy_all() {
+static void _destroy_all()
+{
   if (g_log_config.enable_file) {
     pthread_mutex_destroy(&g_log_file.mutex);
   }
 }
 
-int LogLevelSet(LogLevel level) {
+int LogLevelSet(LogLevel level)
+{
   g_log_config.set_level = level;
   return 0;
 }
 
-static void _open_save_fd() {
+static void _open_save_fd()
+{
   g_log_file.fd = open(LOG_FILE_NAME, O_WRONLY | O_CREAT, 0664);
   if (g_log_file.fd <= 0) {
     printf("%s%d: open save fd[%d] failed.\n", __FUNCTION__, __LINE__,
@@ -217,7 +236,8 @@ static void _open_save_fd() {
   }
 }
 
-int LogInitialize(LogConfig logConfig) {
+int LogInitialize(LogConfig logConfig)
+{
   g_log_config.enable_time = logConfig.enable_time;
   g_log_config.enable_thread_id = logConfig.enable_thread_id;
   g_log_config.enable_function_line = logConfig.enable_function_line;
@@ -231,7 +251,8 @@ int LogInitialize(LogConfig logConfig) {
   return 0;
 }
 
-int LogFinalize(void) {
+int LogFinalize(void)
+{
   _destroy_all();
   return 0;
 }

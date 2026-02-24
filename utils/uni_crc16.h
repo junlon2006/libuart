@@ -36,4 +36,4 @@ uint16_t crc16(const char *buf, int len);
 #ifdef __cplusplus
 }
 #endif
-#endif   //  CRC16_INC_UNI_CRC16_H_
+#endif  //  CRC16_INC_UNI_CRC16_H_
